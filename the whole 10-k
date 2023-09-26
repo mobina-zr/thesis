@@ -1,0 +1,47 @@
+import os
+import re
+
+# Directory path containing the 10-K filings
+path = "/Users/user/Documents/thesis codes/2018 baby"
+
+# Full list of keywords
+keywords = [
+    "Artificial intelligence", "Machine learning", "Deep learning", "Cognitive computing",
+    "Natural language processing", "Image understanding", "Semantic search", "Brain-like computing",
+    "Biometrics", "Face recognition", "Voice recognition", "Autonomous driving", "Quantum Computing",
+    "Edge Computing", "Blockchain", "Cryptocurrency", "Bitcoin", "Smart financial contracts",
+    "Distributed computing", "Digital currency", "Web 3.0", "Decentralized Finance", "Metaverse",
+    "Cloud", "Cloud computing", "Collaboration cloud", "Human cloud", "Streaming computing",
+    "Green computing", "Serverless Computing", "Big data", "Data analytics", "Data mining",
+    "Data visualization", "Text mining", "Data integration", "Data processing system", "Data capturing",
+    "Data architecture", "Heterogeneous data", "Data monetisation", "In-memory computing", "5G and Beyond",
+    "Digital", "Ecommerce", "Mobile Internet", "Mobile payment", "NFC payment", "Eprocurement",
+    "Etravel", "Digital marketing", "Unmanned retail", "Internet of Things", "Smart home", "Smart wear",
+    "Smart agriculture", "Smart transportation", "Smart healthcare", "Smart factory", "Smart investment",
+    "Smart devices", "Internet", "Software", "Augmented reality", "Virtual reality", "Mixed reality",
+    "Digitalization", "Fintech", "OA (Office Automation)", "Bots", "Online", "Platform", "Robotics",
+    "3D print", "Elearning", "Eservice", "Emobility", "Web based", "Click through rate", "Connectivity",
+    "Epublishing", "Ecatalogue", "Ebusiness", "Social media", "Influencer", "Newsfeed", "O2O (Online-to-Offline)",
+    "Sharing economy", "Digital Twins", "Extended Reality (XR)", "Zero Trust Security", "Intellectualization",
+    "Differential privacy technology", "Converged architecture", "Open banking", "Organizational capital",
+    "Industry 4.0"
+]
+# Create regex patterns
+patterns = [re.compile(r'\b' + re.escape(keyword) + r'\b', re.IGNORECASE) for keyword in keywords]
+
+# Initialize a dictionary to store keyword frequencies
+keyword_freq = {keyword: 0 for keyword in keywords}
+
+# Navigate through the 10-K reports in the directory and count keyword occurrences in the entire content
+for file in os.listdir(path):
+    if file.endswith(".txt"):
+        with open(os.path.join(path, file), 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+            for keyword, pattern in zip(keywords, patterns):
+                keyword_freq[keyword] += len(pattern.findall(content))
+
+# Print the results
+for keyword, freq in keyword_freq.items():
+    print(f"{keyword}: {freq}")
+
+print("Keyword counting completed!")
