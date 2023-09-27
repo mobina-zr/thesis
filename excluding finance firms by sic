@@ -1,0 +1,45 @@
+import os
+import re
+import shutil
+
+
+def extract_sic_code(file_content):
+    """
+    Extracts the SIC code from the file content.
+    """
+    match = re.search(r"STANDARD INDUSTRIAL CLASSIFICATION:.*\[(\d{4})\]", file_content)
+    if match:
+        return match.group(1)
+    return None
+
+
+# Main directory containing yearly folders
+main_directory = "/Users/user/Documents/thesis codes/2011-2020"
+
+# Directory where excluded files will be moved
+excluded_directory = "/Users/user/Documents/thesis codes/excluded finance industry firms"
+if not os.path.exists(excluded_directory):
+    os.makedirs(excluded_directory)
+
+# Exclude files with SIC codes in the range 6000-6999
+excluded_sic_range = set(map(str, range(6000, 7000)))
+
+# Iterate through each year's folder in the main directory
+for year_folder in os.listdir(main_directory):
+    year_folder_path = os.path.join(main_directory, year_folder)
+
+    # Ensure it's a directory
+    if os.path.isdir(year_folder_path):
+        # Iterate through each file in the year's folder
+        for filename in os.listdir(year_folder_path):
+            file_path = os.path.join(year_folder_path, filename)
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                file_content = f.read()
+                sic_code = extract_sic_code(file_content)
+
+                # Check if the extracted SIC code belongs to the financial industry (i.e., within the range 6000-6999)
+                if sic_code in excluded_sic_range:
+                    # Move the file to the excluded directory
+                    shutil.move(file_path, os.path.join(excluded_directory, filename))
+
+print("Exclusion process completed!")
