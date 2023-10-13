@@ -1,0 +1,54 @@
+import csv
+from sec_api import QueryApi
+
+# Initialize the QueryApi with your API key
+queryApi = QueryApi(api_key="32f5a018ca933ae3a4cc8a560414994611780b2f30919abd49f5257f06b56c5a")
+
+# Base query structure
+base_query = {
+    "query": {
+        "query_string": {
+            "query": "PLACEHOLDER",  # this will be set during runtime
+            "time_zone": "America/New_York"
+        }
+    },
+    "from": "0",
+    "size": "200",  # don't change this
+    "sort": [{"filedAt": {"order": "desc"}}]
+}
+
+# Read the CSV, extract URLs, and save them back
+rows = []
+with open('/Users/user/Documents/thesis codes/csv baby.csv', 'r', encoding='utf-8-sig') as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        cik = row['CIK']
+        year = row['Date'].split('-')[0]  # Extract year from the date
+
+        # Set the query for the specific CIK, form type 10-K, and year
+        universe_query = f"formType:\"10-K\" AND cik:{cik} AND filedAt:[{year}-01-01 TO {year}-12-31]"
+        base_query["query"]["query_string"]["query"] = universe_query
+
+        response = queryApi.get_filings(base_query)
+
+        # Print the API response for debugging
+        print(f"API Response for CIK {cik} in {year}:")
+        print(response)
+
+        # Extract the first URL (assuming there's only one filing per year per CIK)
+        url = response["filings"][0]["linkToFilingDetails"] if response["filings"] else None
+        row['URL'] = url
+        rows.append(row)
+
+# Print the rows for debugging
+print("Rows to be written to CSV:")
+for row in rows:
+    print(row)
+
+# Write the updated rows back to the CSV
+fieldnames = ['Filename', 'Date', 'Company Name', 'CIK', 'SIC', 'Total Words', 'URL']
+with open('/Users/user/Documents/thesis codes/csv baby.csv', 'w', newline='', encoding='utf-8-sig') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for row in rows:
+        writer.writerow(row)
