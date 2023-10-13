@@ -1,0 +1,25 @@
+from sec_api import ExtractorApi, QueryApi
+from pprint import pprint
+
+# API Key
+api_key = "32f5a018ca933ae3a4cc8a560414994611780b2f30919abd49f5257f06b56c5a"
+
+# Initialize the ExtractorApi and QueryApi with the provided API key
+extractorApi = ExtractorApi(api_key=api_key)
+queryApi = QueryApi(api_key=api_key)
+
+# List of 10-K filing URLs for CIKs 1035216 and 795212 for the year 2012
+filing_urls = [
+    'https://www.sec.gov/Archives/edgar/data/1035216/000144530512000506/sjg-12312011x10k.htm',
+    'https://www.sec.gov/Archives/edgar/data/795212/000093041312002199/c69235_10k.htm'
+]
+
+for filing_url in filing_urls:
+    # Extract the "Item 1 - Business" section as text
+    item_1_text = extractorApi.get_section(filing_url, '1', 'text')
+
+    print(f'Extracted Item 1 (Text) from {filing_url}')
+    print('-----------------------')
+    pprint(item_1_text[0:1500])  # Print the first 1500 characters for brevity
+    print('\n... cut for brevity')
+    print('-----------------------\n')
