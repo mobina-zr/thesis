@@ -1,0 +1,46 @@
+from sec_api import QueryApi
+
+# Initialize the QueryApi with your API key
+queryApi = QueryApi(api_key="32f5a018ca933ae3a4cc8a560414994611780b2f30919abd49f5257f06b56c5a")
+
+# Base query structure
+base_query = {
+    "query": {
+        "query_string": {
+            "query": "PLACEHOLDER",  # this will be set during runtime
+            "time_zone": "America/New_York"
+        }
+    },
+    "from": "0",
+    "size": "200",  # don't change this
+    "sort": [{"filedAt": {"order": "desc"}}]
+}
+
+# CIKs and year you're interested in
+CIKS = ["1035216", "795212"]
+YEAR = "2012"
+
+# Open the file to store the filing URLs
+log_file = open("filing_urls_2012.txt", "a")
+
+for cik in CIKS:
+    # Set the query for the specific CIK, form type 10-K, and year
+    universe_query = f"formType:\"10-K\" AND cik:{cik} AND filedAt:[{YEAR}-01-01 TO {YEAR}-12-31]"
+    base_query["query"]["query_string"]["query"] = universe_query
+
+    response = queryApi.get_filings(base_query)
+
+    # Extract the URLs and write them to the file
+    urls_list = [filing["linkToFilingDetails"] for filing in response["filings"]]
+    urls_string = "\n".join(urls_list) + "\n"
+    log_file.write(urls_string)
+
+    print(f"Filing URLs downloaded for CIK {cik} in {YEAR}:")
+
+    for url in urls_list:
+        print(url)
+    print("\n")
+
+log_file.close()
+
+print("All URLs for 2012 downloaded")
