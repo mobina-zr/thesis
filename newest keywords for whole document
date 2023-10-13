@@ -1,0 +1,73 @@
+import os
+import re
+import csv
+
+# Directory containing the 10-K filings
+path = "/Users/user/Documents/thesis codes/2011-2020/10-K_2015"
+
+# Define the keywords from our dictionary
+keywords = [
+    "Artificial intelligence", "Machine learning", "Deep learning", "Cognitive computing",
+    "Natural language processing", "Image understanding", "Semantic search",
+    "Biometrics", "Face recognition", "Voice recognition", "Autonomous driving", "Quantum Computing",
+    "Edge Computing", "Blockchain", "Cryptocurrency", "Bitcoin", "Smart contracts",
+    "Distributed computing", "Digital currency", "Web 3.0", "Decentralized Finance", "Metaverse",
+    "Cloud", "Cloud computing", "Cloud Collaboration", "Human cloud", "Green computing", "Serverless Computing", 
+    "Big data", "Data analytics", "Data mining", "Data visualization", "Text mining", "Data integration", 
+    "Data processing system", "Data capturing", "Data architecture", "Heterogeneous data", 
+    "In-memory computing", "5G", "Digital", "Ecommerce", "Mobile Internet", "Mobile payment", 
+    "NFC payment", "Digital marketing", "Unmanned", "Internet of Things", "Smart home", "Smart agriculture", 
+    "Smart transportation", "Smart healthcare", "Smart factory", "Smart investment", "Smart devices", 
+    "Internet", "Software", "Augmented reality", "Virtual reality", "Digitalization", "Fintech", 
+    "Office Automation", "Bots", "Online", "Platform", "Robotics", "3D print", "Elearning", 
+    "Eservice", "Emobility", "Web based", "Click through rate", "Epublishing", "Ecatalogue", 
+    "Ebusiness", "Social media", "Influencer", "Newsfeed", "Sharing economy", "Digital Twin", 
+    "Differential privacy", "Converged infrastructure", "Open banking", "Organizational capital", 
+    "Industry 4.0", "App", "Artificial reality", "Automation", "Autonomous technology", "Biometric", 
+    "Business intelligence", "Data lake", "Data monetization", "Data science", "Devops", "Digitally", 
+    "Digitization", "E-business", "E-catalogue", "E-commerce", "E-learning", "E-mobility", 
+    "E-procurement", "E-publishing", "E-service", "Hightech", "High-tech", "Image recognition", 
+    "Intelligent systems", "IoT", "Neural network", "New economy", "NLP", "Open source", "Robots", 
+    "Selfdriving car", "Sentiment analysis", "Smart content", "Smartphone", "Speech recognition"
+]
+# Create regex patterns for keywords
+patterns = [re.compile(r'\b' + re.escape(keyword) + r'\b', re.IGNORECASE) for keyword in keywords]
+
+# Define regex patterns to extract required details from 10-K
+date_pattern = re.compile(r"FILED AS OF DATE:\s+(\d+)")
+company_name_pattern = re.compile(r"COMPANY CONFORMED NAME:\s+(.*)")
+cik_pattern = re.compile(r"CENTRAL INDEX KEY:\s+(\d+)")
+sic_pattern = re.compile(r"STANDARD INDUSTRIAL CLASSIFICATION:\s+(.*)")
+
+# Initialize results list to store extracted data
+results = []
+
+# Process each 10-K file in the directory
+for filename in os.listdir(path):
+    if filename.endswith(".txt"):
+        with open(os.path.join(path, filename), 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+            # Extract details from 10-K
+            date = date_pattern.search(content).group(1)
+            date_standardized = f"{date[:4]}-{date[4:6]}-{date[6:]}"  # Format as YYYY-MM-DD
+            company_name = company_name_pattern.search(content).group(1)
+            cik = cik_pattern.search(content).group(1)
+            sic_search = sic_pattern.search(content)
+            sic = sic_search.group(1) if sic_search else "Not Found"
+
+            # Count keyword frequencies and total words
+            total_keyword_counts = sum([len(pattern.findall(content)) for pattern in patterns])
+            total_words = len(re.findall(r'\b\w+\b', content))
+
+            # Append data to results list
+            results.append([filename, date_standardized, company_name, cik, sic, total_words, total_keyword_counts])
+
+# Write results to CSV
+headers = ["Filename", "Date", "Company Name", "CIK", "SIC", "Total Words", "Total Keyword Counts"]
+with open(os.path.join(path, "results 2015.csv"), 'w', newline='', encoding='utf-8') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(headers)
+    writer.writerows(results)
+
+print("Extraction process completed!")
