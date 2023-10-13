@@ -1,0 +1,29 @@
+import csv
+from sec_api import ExtractorApi, QueryApi
+
+# API Key
+api_key = "32f5a018ca933ae3a4cc8a560414994611780b2f30919abd49f5257f06b56c5a"
+
+# Initialize the ExtractorApi and QueryApi with the provided API key
+extractorApi = ExtractorApi(api_key=api_key)
+queryApi = QueryApi(api_key=api_key)
+
+# Path to the CSV file and the directory to save the business sections
+csv_path = "/Users/user/Documents/thesis codes/csv baby.csv"
+save_directory = "/Users/user/Documents/thesis codes/Business sections"
+
+# Read the URLs from the CSV file
+with open(csv_path, mode='r', encoding='utf-8-sig') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        filing_url = row["URL"]
+        cik = row["CIK"]
+
+        # Extract the "Item 1 - Business" section as text
+        item_1_text = extractorApi.get_section(filing_url, '1', 'text')
+
+        # Save the business section to a text file named with the CIK code
+        with open(f"{save_directory}/{cik}.txt", "w") as text_file:
+            text_file.write(item_1_text)
+
+        print(f'Saved Item 1 (Business) for CIK {cik} to {cik}.txt')
