@@ -1,0 +1,27 @@
+import pandas as pd
+
+# Load the data
+df = pd.read_csv("/Users/user/Documents/thesis codes/Results/results 2011.csv")
+
+# Calculate the percentage
+df['Percentage'] = (df['Total Keyword Counts'] / df['Total Words']) * 100
+
+# Determine the tercile thresholds
+lower_tercile = df['Percentage'].quantile(0.33)
+middle_tercile = df['Percentage'].quantile(0.66)
+
+# Assign tercile values
+def assign_tercile(value):
+    if value == 0:
+        return 0
+    elif value <= lower_tercile:
+        return 1
+    elif value <= middle_tercile:
+        return 2
+    else:
+        return 3
+
+df['Digital Activity Score'] = df['Percentage'].apply(assign_tercile)
+
+# Save the updated dataframe
+df.to_csv("/Users/user/Documents/thesis codes/Results/results 2011_updated.csv", index=False)
