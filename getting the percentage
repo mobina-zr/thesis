@@ -1,0 +1,18 @@
+import pandas as pd
+
+# Path to the specific CSV file
+filepath = "/Users/user/Documents/thesis codes/Results/results 2011.csv"
+
+# Read the CSV file into a DataFrame
+df = pd.read_csv(filepath)
+
+# Calculate the percentage of keywords to total words
+df['Percentage'] = (df['Total Keyword Counts'] / df['Total Words']) * 100
+
+# Multiply the percentage by 10,000
+df['Scaled Percentage'] = df['Percentage'] * 10000
+
+# Save the modified DataFrame back to the CSV file
+df.to_csv(filepath, index=False)
+
+print("Processing completed!")
