@@ -1,0 +1,11 @@
+import numpy as np
+import pandas as pd
+
+# Load the CSV file into a DataFrame
+df = pd.read_csv("/Users/user/Documents/thesis codes/Results/results 2011.csv")
+
+# Apply the transformation to the frequencies
+df['Log Transformed Frequencies'] = np.log(df['Total Keyword Counts'] + 1)
+
+# Save the updated DataFrame back to the CSV
+df.to_csv("/Users/user/Documents/thesis codes/Results/results 2011.csv", index=False)
