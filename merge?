@@ -1,0 +1,21 @@
+import pandas as pd
+
+# Paths to the files
+path_own_file = "/Users/user/Documents/thesis codes/Results/combined_results.csv"
+path_big_file = "/Users/user/Documents/thesis codes/mobina_variables.csv"
+
+# Load the datasets
+df_own = pd.read_csv(path_own_file)
+df_big = pd.read_csv(path_big_file, low_memory=False)
+
+# Convert 'Date' in df_own to only the year and convert it to float
+df_own['Date'] = df_own['Date'].str[:4].astype(float)
+
+# Rename CIK in own file for clarity
+df_own = df_own.rename(columns={"CIK": "CIK_own"})
+
+# Merge the two datasets based on CIK and Date
+merged_df = pd.merge(df_own, df_big, left_on=['CIK_own', 'Date'], right_on=['CIK', 'FYEAR'], how='inner')
+
+# Save the merged dataframe
+merged_df.to_csv("/Users/user/Documents/thesis codes/Results/merged_data.csv", index=False)
