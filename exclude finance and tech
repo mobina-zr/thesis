@@ -1,0 +1,48 @@
+import os
+import re
+import shutil
+
+
+def extract_sic_code(file_content):
+    """
+    Extracts the SIC code from the file content.
+    """
+    match = re.search(r"STANDARD INDUSTRIAL CLASSIFICATION:.*\[(\d{4})\]", file_content)
+    if match:
+        return match.group(1)
+    return None
+
+
+# Main directory containing the files
+main_directory = "/Users/user/Documents/thesis codes/10-X_C_2006-2010/10-K_2010"
+
+# Directory where excluded files will be moved
+excluded_directory = "/Users/user/Documents/thesis codes/excluded firms"
+if not os.path.exists(excluded_directory):
+    os.makedirs(excluded_directory)
+
+# Define a set of SIC codes to be excluded
+excluded_sic_codes = {
+    "3570", "3571", "3572", "3575", "3576", "3577", "3578", "3579",
+    "3661", "3663", "3669", "3670", "3672", "3674", "3675", "3677", "3678", "3679",
+    "4812", "4813", "4899", "7370", "7371", "7372", "7373", "7374", "7375", "7376", "7377", "7378", "7379"
+}
+# Add SIC codes in the range 6000-6999
+excluded_sic_codes.update(map(str, range(6000, 7000)))
+
+# Iterate through each file in the main directory
+for filename in os.listdir(main_directory):
+    file_path = os.path.join(main_directory, filename)
+
+    # Ensure it's a file
+    if os.path.isfile(file_path):
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            file_content = f.read()
+            sic_code = extract_sic_code(file_content)
+
+            # Check if the extracted SIC code is in the set of excluded codes
+            if sic_code in excluded_sic_codes:
+                # Move the file to the excluded directory
+                shutil.move(file_path, os.path.join(excluded_directory, filename))
+
+print("Exclusion process completed!")
