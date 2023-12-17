@@ -1,0 +1,129 @@
+import os
+import re
+import csv
+import nltk
+from nltk.corpus import stopwords
+
+# Ensure NLTK Stopwords are downloaded
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+# Directory containing the 10-K filings for 2020
+path = "/Users/user/Documents/thesis codes/2011-2020/10-K_2020"
+
+# Directory to save the results CSV
+output_path = "/Users/user/Documents/thesis codes/new results"
+
+# Define the keywords organized by categories
+categories = {
+    'AI_Technology': [
+        "Artificial intelligence", "Artificial reality", "Automation", "Autonomous driving",
+        "Autonomous technology", "Biometric", "Biometrics", "cognitive computing", "Deep learning",
+        "Differential privacy", "Face recognition", "Image recognition", "Image understanding",
+        "Intelligent systems", "Machine learning", "Natural language processing", "Neural network",
+        "NLP", "Robotics", "Robots", "Selfdriving car", "Semantic search", "Sentiment analysis",
+        "Speech recognition", "Text mining", "Voice recognition"
+    ],
+    'Blockchain_Technology': [
+        "Bitcoin", "Blockchain", "Cryptocurrency", "Decentralized Finance", "Digital currency",
+        "Distributed computing", "Smart contracts"
+    ],
+    'Cloud_Computing_Technology': [
+        "Cloud collaboration", "Cloud computing", "cloud IT", "cloud platforms", "Cognitive computing",
+        "Converged infrastructure", "Data architecture", "Data capturing", "Data integration",
+        "Data processing system", "Green computing", "Internet of Things", "IOT", "Quantum computing",
+        "Serverless computing"
+    ],
+    'Big_Data_Technology': [
+        "Augmented reality", "Big data", "Data analytics", "Data lake", "Data mining",
+        "Data monetization", "Data science", "Data visualization", "devops", "digital twin",
+        "edge computing", "Heterogeneous data", "Metaverse", "mixed reality", "text mining",
+        "Virtual reality"
+    ],
+    'Digital_Technology_Applications': [
+        "3D print", "5G", "App", "Business intelligence", "Click-through rate", "Digital marketing",
+        "Digitalization", "Digitally", "Digitization", "E-business", "E-catalogue", "E-commerce",
+        "E-learning", "E-mobility", "E-procurement", "E-publishing", "E-service", "Ebusiness",
+        "Ecatalogue", "Ecommerce", "Elearning", "Emobility", "Epublishing", "Eservice", "Fintech",
+        "High-tech", "Hightech", "Human cloud", "Influencer", "Mobile internet", "Mobile payment",
+        "New economy", "Newsfeed", "NFC payment", "Online", "Open banking", "Open source",
+        "Organizational capital", "Platform", "Sharing economy", "Smart agriculture", "Smart content",
+        "Smart devices", "Smart factory", "smart grid", "Smart healthcare", "Smart home", "Smart investment",
+        "smart marketing", "Smart transportation", "Smartphone", "Social media", "Software",
+        "third-party payment", "Unmanned", "Web 3.0", "Web based"
+    ]
+}
+
+# Compile regex patterns for keywords, organized by category
+patterns = {cat: [re.compile(r'\b' + re.escape(keyword) + r'\b', re.IGNORECASE) for keyword in keywords]
+            for cat, keywords in categories.items()}
+
+# Define regex patterns to extract required details from 10-K
+detail_patterns = {
+    'date': re.compile(r"FILED AS OF DATE:\s+(\d+)"),
+    'company_name': re.compile(r"COMPANY CONFORMED NAME:\s+(.*)"),
+    'cik': re.compile(r"CENTRAL INDEX KEY:\s+(\d+)"),
+    'sic': re.compile(r"STANDARD INDUSTRIAL CLASSIFICATION:\s+(.*)")
+}
+
+# Function to clean and tokenize text
+def tokenize(text):
+    # Lowercasing and removing punctuation
+    text = re.sub(r'[^\w\s]', '', text.lower())
+    # Tokenizing
+    words = re.findall(r'\b\w+\b', text)
+    # Removing stop words
+    return [word for word in words if word not in stop_words]
+
+# Initialize results list to store extracted data
+results = []
+
+# Process each 10-K file in the directory
+for filename in os.listdir(path):
+    if filename.endswith(".txt"):
+        with open(os.path.join(path, filename), 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+
+            # Extract details from 10-K
+            details = {}
+            for key, pattern in detail_patterns.items():
+                match = pattern.search(content)
+                if match:
+                    details[key] = match.group(1)
+                else:
+                    details[key] = "Not Found"
+
+            # Tokenize the content
+            tokens = tokenize(content)
+            total_words = len(tokens)
+
+            # Count keyword frequencies by category and total
+            category_counts = {cat: sum(len(pattern.findall(' '.join(tokens))) for pattern in cat_patterns)
+                               for cat, cat_patterns in patterns.items()}
+            total_keyword_counts = sum(category_counts.values())
+
+            # Compute proportions and scale
+            category_proportions = {cat: (count / total_words) * 1000 for cat, count in category_counts.items()}
+            total_proportion = (total_keyword_counts / total_words) * 1000
+
+            # Append data to results list
+            results.append([filename, details['date'], details['company_name'], details['cik'], details['sic'],
+                            total_words, total_keyword_counts] +
+                           list(category_counts.values()) +
+                           list(category_proportions.values()) +
+                           [total_proportion])
+
+# Headers for CSV file
+headers = ["Filename", "Date", "Company Name", "CIK", "SIC", "Total Words", "Total Keyword Counts"] + \
+          [f"{cat} Count" for cat in categories.keys()] + \
+          [f"{cat} Proportion (per 1000 words)" for cat in categories.keys()] + \
+          ["Total Proportion (per 1000 words)"]
+
+# Write results to CSV
+csv_filename = os.path.join(output_path, "new_results_2020.csv")
+with open(csv_filename, 'w', newline='', encoding='utf-8') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(headers)
+    writer.writerows(results)
+
+print("Extraction and analysis process completed! Results saved in:", csv_filename)
