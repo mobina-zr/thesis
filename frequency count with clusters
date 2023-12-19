@@ -1,0 +1,115 @@
+import os
+import re
+import csv
+
+# Directory containing
+input_path = "/Users/user/Documents/thesis codes/2011-2020/10-K_2011"
+
+# Updated directory to save the results CSV
+output_path = "/Users/user/Documents/thesis codes/untitled folder/New counts"
+output_filename = "2011 _new_count.csv"
+
+# Categorized keywords
+categories = {
+    'AI_Technology': [
+        "Artificial intelligence", "Artificial reality", "Automation", "Autonomous driving",
+        "Autonomous technology", "Biometric", "Biometrics", "cognitive computing", "Deep learning",
+        "Differential privacy", "Face recognition", "Image recognition", "Image understanding",
+        "intelligent platform", "Intelligent systems", "Machine learning", "Natural language processing",
+        "Neural network", "NLP", "Robotics", "Robots", "Selfdriving car", "Semantic search",
+        "Sentiment analysis", "Speech recognition", "Text mining", "Voice recognition"
+    ],
+    'Blockchain_Technology': [
+        "Bitcoin", "Blockchain", "Cryptocurrency", "Decentralized Finance", "Digital currency",
+        "Distributed computing", "Smart contracts"
+    ],
+    'Cloud_Computing_Technology': [
+        "Cloud collaboration", "Cloud computing", "cloud IT", "cloud platforms", "Cognitive computing",
+        "Converged infrastructure", "Data architecture", "Data capturing", "Data integration",
+        "Green computing", "Internet of Things", "IOT", "Quantum computing", "Serverless computing"
+    ],
+    'Big_Data_Technology': [
+        "Augmented reality", "Big data", "Data analytics", "Data lake", "Data mining",
+        "Data monetization", "Data processing system", "Data science", "Data visualization", "devops",
+        "digital twin", "edge computing", "Heterogeneous data", "Metaverse", "mixed reality",
+        "text mining", "Virtual reality"
+    ],
+    'Digital_Technology_Applications': [
+        "3D print", "5G", "App", "Automation", "Business intelligence", "Click-through rate",
+        "Data Management Platform", "Digital marketing", "Digital Platform", "Digitalization",
+        "Digitally", "Digitization", "E-business", "E-catalogue", "E-commerce", "E-learning",
+        "E-mobility", "E-procurement", "E-publishing", "E-service", "Ebusiness", "Ecatalogue",
+        "Ecommerce", "Elearning", "Emobility", "Epublishing", "Eservice", "Fintech", "High-tech",
+        "Hightech", "Human cloud", "Influencer", "Mobile internet", "Mobile payment", "New economy",
+        "Newsfeed", "NFC payment", "Online", "Open banking", "Open source", "Organizational capital",
+        "Sharing economy", "Smart agriculture", "Smart content", "Smart devices", "Smart factory",
+        "smart grid", "Smart healthcare", "Smart home", "Smart investment", "smart marketing",
+        "Smart transportation", "Smartphone", "Social media", "Software", "third-party payment",
+        "Unmanned", "Web 3.0", "Web based"
+    ]
+}
+
+# Compile regex patterns for details extraction
+detail_patterns = {
+    'date': re.compile(r"FILED AS OF DATE:\s+(\d+)"),
+    'company_name': re.compile(r"COMPANY CONFORMED NAME:\s+(.*)"),
+    'cik': re.compile(r"CENTRAL INDEX KEY:\s+(\d+)"),
+    'sic': re.compile(r"STANDARD INDUSTRIAL CLASSIFICATION:\s+(.*)")
+}
+
+# Compile regex patterns for keywords, making 's' at the end optional
+patterns = {
+    category: [re.compile(r'\b' + re.escape(keyword.rstrip('s')) + r's?\b', re.IGNORECASE) for keyword in keywords]
+    for category, keywords in categories.items()
+}
+
+# Initialize results list to store extracted data
+results = []
+
+# Process each 10-K file in the directory
+for filename in os.listdir(input_path):
+    if filename.endswith(".txt"):
+        filepath = os.path.join(input_path, filename)
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as file:
+            content = file.read()
+
+            # Extract details from 10-K
+            details = {key: (pattern.search(content).group(1) if pattern.search(content) else "Not Found")
+                       for key, pattern in detail_patterns.items()}
+
+            # Count keyword frequencies by category and calculate total frequency
+            total_frequency = 0
+            category_counts = {}
+            for category, cat_patterns in patterns.items():
+                count = sum(len(pattern.findall(content)) for pattern in cat_patterns)
+                category_counts[category] = count
+                total_frequency += count
+
+            # Prepare the data to be written to the CSV
+            row_data = [
+                filename,
+                details['date'],
+                details['company_name'],
+                details['cik'],
+                details['sic']
+            ] + list(category_counts.values()) + [total_frequency]
+
+            results.append(row_data)
+
+# Write results to CSV
+headers = ["Filename", "Date", "Company Name", "CIK", "SIC"] + \
+          [f"{cat} Count" for cat in categories.keys()] + \
+          ["Total Keyword Frequency"]
+
+# Ensure the output directory exists
+if not os.path.exists(output_path):
+    os.makedirs(output_path)
+
+# Full path to the output CSV file
+output_file = os.path.join(output_path, output_filename)
+with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(headers)
+    writer.writerows(results)
+
+print("Extraction and analysis process completed! Results saved in:", output_file)
